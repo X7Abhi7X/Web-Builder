@@ -1,0 +1,37 @@
+Prompt for Drag-and-Drop Transformation
+Objective: Transform our form-based website builder into a seamless drag-and-drop interface with enhanced user experience and customization.
+
+Context: Currently, Websites.co.in users create websites by filling out forms, which generates a website with customizable templates. The goal is to enhance this experience by introducing drag-and-drop functionality, enabling users to have more control over their website design.
+
+Key Features to Implement:
+User Experience: Implement an intuitive drag-and-drop interface with smooth interactions allowing users to drag and position elements like text, images, and buttons into a predefined template structure.
+Customization: Retain the form-based approach for configuring element properties after they are placed on the canvas.
+Responsiveness: Ensure the builder works seamlessly across different devices (mobile and desktop).
+Scalability: Design the architecture with future feature expansions in mind (adding more templates, elements, etc.).
+Code Quality: Use a modern frontend framework (React preferred) for well-organized, readable code.
+Deliverables:
+Prototype of the drag-and-drop website builder.
+A homepage that stores all saved projects, resembling the reference image provided.
+Build page inspired by the Figma interface, ensuring all properties from the provided images function correctly.
+Brief documentation explaining the architecture, tools used, and the rationale behind the approach.
+A video demonstration of your work.
+Please submit your work by emailing hr@websites.co.in within the next 3-5 days. Mention “FrontendDev assignment” in the subject line.
+
+Prompt for Moving Elements within Canvas and Establishing Parent-Child Relationships
+Objective: Implement functionality for moving elements within the canvas, establishing parent-child relationships to maintain structured hierarchies.
+
+Parameters and Requirements:
+Canvas Interactions: Enable users to drag and drop elements (sections, texts, images, buttons, etc.) smoothly within the canvas.
+Hierarchical Structuring: Ensure elements can be nested within each other (e.g., placing a text or button inside a section), establishing parent-child relationships.
+Customization: Allow users to use forms to configure properties of elements after they are placed within their parent.
+Responsiveness: Make sure this hierarchical interaction is optimized for both mobile and desktop interfaces.
+Reference Design: Follow the design references from the provided images to create visually appealing and functional canvas interactions.
+Example Prompt that includes Hierarchical Ordering:
+Implement a drag-and-drop interface to allow users to move elements within a canvas, maintaining hierarchical relationships between elements. Users should be able to place elements like text, images, and buttons within sections, creating parent-child relationships. The interface should be smooth and intuitive, and allow users to configure the properties of these elements using forms after placement. Ensure the design follows the visual and functional references provided (see images), and is optimized for both mobile and desktop use.
+Notes on Prototype Development:
+Homepage Design:
+Create a homepage for the builder that stores all saved projects, similar to the layout of the first image provided, ensuring users can easily access their recent work.
+Build Page Design:
+Mimic the functionality and layout of the Figma interface in the second image, ensuring users can drag and drop elements, adjust properties, and manage layers efficiently.
+By following these guidelines and prompts, you’re well-equipped to create a comprehensive prototype that meets the requirements and enhances the user experience for Websites.co.in.
+
