@@ -1,16 +1,17 @@
+import { useState } from 'react';
 import { Link } from 'wouter';
-import { useBuilderStore } from '@/store/builderStore';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  ArrowLeft, 
+  ChevronLeft,
   Undo2, 
   Redo2, 
   Eye, 
   Save, 
-  Rocket,
+  Globe,
   Monitor,
   Tablet,
   Smartphone
@@ -18,146 +19,167 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { Project } from '@shared/schema';
 
 interface TopToolbarProps {
-  projectId?: string;
-  projectName?: string;
-  projectStatus?: string;
+  project: Project;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  viewport: 'desktop' | 'tablet' | 'mobile';
+  setViewport: (viewport: 'desktop' | 'tablet' | 'mobile') => void;
+  zoom: number;
+  setZoom: (zoom: number) => void;
 }
 
-export function TopToolbar({ projectId, projectName = 'Untitled Project', projectStatus = 'draft' }: TopToolbarProps) {
-  const { 
-    elements, 
-    viewport, 
-    setViewport, 
-    zoom, 
-    setZoom, 
-    undo, 
-    redo, 
-    history, 
-    historyIndex 
-  } = useBuilderStore();
-  
+export default function TopToolbar({
+  project,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  viewport,
+  setViewport,
+  zoom,
+  setZoom
+}: TopToolbarProps) {
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [projectName, setProjectName] = useState(project.name);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const saveProjectMutation = useMutation({
-    mutationFn: async () => {
-      if (!projectId) throw new Error('No project ID');
-      return apiRequest('PUT', `/api/projects/${projectId}`, {
-        content: { elements },
-        updatedAt: new Date().toISOString()
-      });
+  const updateProjectMutation = useMutation({
+    mutationFn: async (updates: Partial<Project>) => {
+      return apiRequest<Project>('PUT', `/api/projects/${project.id}`, updates);
     },
     onSuccess: () => {
       toast({
-        title: "Project saved",
-        description: "Your changes have been saved successfully.",
+        title: "Project updated",
+        description: "Your changes have been saved.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${project.id}`] });
     },
     onError: () => {
       toast({
-        title: "Save failed",
-        description: "Failed to save project. Please try again.",
+        title: "Update failed",
+        description: "Failed to update project. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const publishProjectMutation = useMutation({
-    mutationFn: async () => {
-      if (!projectId) throw new Error('No project ID');
-      return apiRequest('PUT', `/api/projects/${projectId}`, {
-        status: 'published',
-        content: { elements },
-        updatedAt: new Date().toISOString()
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Project published",
-        description: "Your website is now live!",
-      });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-    },
-    onError: () => {
-      toast({
-        title: "Publish failed",
-        description: "Failed to publish project. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSave = () => {
-    if (projectId) {
-      saveProjectMutation.mutate();
+  const handleNameSave = async () => {
+    if (projectName !== project.name) {
+      await updateProjectMutation.mutateAsync({ name: projectName });
     }
-  };
-
-  const handlePublish = () => {
-    if (projectId) {
-      publishProjectMutation.mutate();
-    }
+    setIsEditingName(false);
   };
 
   const handlePreview = () => {
-    // In a real app, this would open a preview window
-    toast({
-      title: "Preview mode",
-      description: "Preview functionality would open here.",
+    // Open preview in new tab
+    const previewWindow = window.open('', '_blank');
+    if (previewWindow) {
+      previewWindow.document.write(`
+        <html>
+          <head>
+            <title>Preview - ${projectName}</title>
+            <style>
+              body { margin: 0; padding: 0; }
+            </style>
+          </head>
+          <body>
+            <div id="preview"></div>
+            <script>
+              const content = ${JSON.stringify(project.content)};
+              // TODO: Implement preview rendering
+              document.getElementById('preview').innerHTML = 
+                '<div style="padding: 20px;"><h1>Preview of ' + 
+                ${JSON.stringify(projectName)} + 
+                '</h1><pre>' + 
+                JSON.stringify(content, null, 2) + 
+                '</pre></div>';
+            </script>
+          </body>
+        </html>
+      `);
+      previewWindow.document.close();
+    }
+  };
+
+  const handlePublish = async () => {
+    await updateProjectMutation.mutateAsync({ 
+      status: 'published',
+      updatedAt: new Date()
     });
   };
 
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
+  const handleSave = async () => {
+    await updateProjectMutation.mutateAsync({ 
+      updatedAt: new Date()
+    });
+  };
 
   return (
-    <header className="bg-white border-b border-gray-200 flex items-center justify-between px-4 py-3">
+    <div className="h-14 border-b border-gray-200 bg-white px-4 flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <Link href="/">
           <Button variant="ghost" size="sm">
-            <ArrowLeft size={16} className="mr-2" />
+            <ChevronLeft size={16} className="mr-1" />
             Back
           </Button>
         </Link>
-        
+
         <Separator orientation="vertical" className="h-6" />
-        
+
         <div className="flex items-center space-x-2">
-          <h1 className="font-semibold text-gray-900">{projectName}</h1>
-          <Badge variant={projectStatus === 'published' ? 'default' : 'secondary'}>
-            {projectStatus}
+          {isEditingName ? (
+            <Input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onBlur={handleNameSave}
+              onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+              className="w-64 h-8"
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => setIsEditingName(true)}
+              className="text-sm font-medium hover:text-blue-600 transition-colors"
+            >
+              {projectName}
+            </button>
+          )}
+          <Badge variant={project.status === 'published' ? 'default' : 'secondary'}>
+            {project.status}
           </Badge>
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-4">
         {/* Undo/Redo */}
         <div className="flex items-center space-x-1">
           <Button
             variant="ghost"
             size="sm"
-            onClick={undo}
+            onClick={onUndo}
             disabled={!canUndo}
-            title="Undo"
           >
             <Undo2 size={16} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={redo}
+            onClick={onRedo}
             disabled={!canRedo}
-            title="Redo"
           >
             <Redo2 size={16} />
           </Button>
         </div>
-        
+
         <Separator orientation="vertical" className="h-6" />
-        
+
         {/* Viewport Controls */}
         <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
           <Button
@@ -185,7 +207,7 @@ export function TopToolbar({ projectId, projectName = 'Untitled Project', projec
             Mobile
           </Button>
         </div>
-        
+
         {/* Zoom Control */}
         <Select value={zoom.toString()} onValueChange={(value) => setZoom(parseInt(value))}>
           <SelectTrigger className="w-20">
@@ -202,34 +224,32 @@ export function TopToolbar({ projectId, projectName = 'Untitled Project', projec
             <SelectItem value="300">300%</SelectItem>
           </SelectContent>
         </Select>
-        
+
         <Separator orientation="vertical" className="h-6" />
-        
+
         {/* Actions */}
         <Button variant="outline" size="sm" onClick={handlePreview}>
           <Eye size={16} className="mr-2" />
           Preview
         </Button>
-        
+
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleSave}
-          disabled={saveProjectMutation.isPending}
         >
           <Save size={16} className="mr-2" />
-          {saveProjectMutation.isPending ? 'Saving...' : 'Save'}
+          Save
         </Button>
-        
+
         <Button 
           size="sm" 
           onClick={handlePublish}
-          disabled={publishProjectMutation.isPending}
         >
-          <Rocket size={16} className="mr-2" />
-          {publishProjectMutation.isPending ? 'Publishing...' : 'Publish'}
+          <Globe size={16} className="mr-2" />
+          {project.status === 'published' ? 'Published' : 'Publish'}
         </Button>
       </div>
-    </header>
+    </div>
   );
 }

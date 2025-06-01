@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Homepage from "@/pages/homepage";
 import Builder from "@/pages/builder";
+import Import from "@/pages/import";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -12,20 +13,19 @@ function Router() {
     <Switch>
       <Route path="/" component={Homepage} />
       <Route path="/builder/:id" component={Builder} />
+      <Route path="/import" component={Import} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
         <Router />
+        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;

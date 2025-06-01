@@ -10,6 +10,12 @@ interface ResizableElementProps {
   onMove: (x: number, y: number) => void;
   initialPosition?: { x: number; y: number };
   initialSize?: { width: number; height: number };
+  aspectRatio?: number;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  gridSize?: number;
 }
 
 type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
@@ -21,7 +27,13 @@ export function ResizableElement({
   onResize,
   onMove,
   initialPosition = { x: 0, y: 0 },
-  initialSize = { width: 200, height: 100 }
+  initialSize = { width: 200, height: 100 },
+  aspectRatio,
+  minWidth = 50,
+  minHeight = 30,
+  maxWidth = 2000,
+  maxHeight = 2000,
+  gridSize = 1
 }: ResizableElementProps) {
   const [position, setPosition] = useState(initialPosition);
   const [size, setSize] = useState(initialSize);
@@ -31,17 +43,23 @@ export function ResizableElement({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const elementRef = useRef<HTMLDivElement>(null);
 
+  // Update position when initialPosition changes
+  useEffect(() => {
+    setPosition(initialPosition);
+  }, [initialPosition.x, initialPosition.y]);
+
+  // Update size when initialSize changes
+  useEffect(() => {
+    setSize(initialSize);
+  }, [initialSize.width, initialSize.height]);
+
   const handleMouseDown = (e: ReactMouseEvent) => {
-    if (!isSelected) return;
-    
-    e.preventDefault();
+    if (e.button !== 0 || !isSelected) return;
     e.stopPropagation();
-    
+
     setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
+    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+    document.body.style.cursor = 'grabbing';
   };
 
   const handleResizeMouseDown = (e: ReactMouseEvent, handle: ResizeHandle) => {
@@ -51,60 +69,103 @@ export function ResizableElement({
     setIsResizing(true);
     setResizeHandle(handle);
     setDragStart({ x: e.clientX, y: e.clientY });
+    document.body.style.cursor = getHandleCursor(handle);
   };
 
   useEffect(() => {
+    if (!isDragging && !isResizing) return;
+
     const handleMouseMove = (e: MouseEvent) => {
+      if (!elementRef.current) return;
+
       if (isDragging) {
         const newX = e.clientX - dragStart.x;
         const newY = e.clientY - dragStart.y;
-        setPosition({ x: newX, y: newY });
-        onMove(newX, newY);
-      }
-      
-      if (isResizing && resizeHandle) {
+
+        // Snap to grid if needed
+        const snappedX = Math.round(newX / gridSize) * gridSize;
+        const snappedY = Math.round(newY / gridSize) * gridSize;
+
+        setPosition({ x: snappedX, y: snappedY });
+        onMove(snappedX, snappedY);
+      } else if (isResizing && resizeHandle) {
         const deltaX = e.clientX - dragStart.x;
         const deltaY = e.clientY - dragStart.y;
-        
+
         let newWidth = size.width;
         let newHeight = size.height;
         let newX = position.x;
         let newY = position.y;
-        
+
+        const constrainSize = (w: number, h: number) => {
+          w = Math.max(minWidth, Math.min(maxWidth, Math.round(w / gridSize) * gridSize));
+          h = Math.max(minHeight, Math.min(maxHeight, Math.round(h / gridSize) * gridSize));
+
+          if (aspectRatio) {
+            if (w / h > aspectRatio) {
+              w = h * aspectRatio;
+            } else {
+              h = w / aspectRatio;
+            }
+          }
+
+          return { width: w, height: h };
+        };
+
         switch (resizeHandle) {
           case 'se':
-            newWidth = Math.max(50, size.width + deltaX);
-            newHeight = Math.max(30, size.height + deltaY);
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width + deltaX,
+              size.height + deltaY
+            ));
             break;
           case 'sw':
-            newWidth = Math.max(50, size.width - deltaX);
-            newHeight = Math.max(30, size.height + deltaY);
-            newX = position.x + deltaX;
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width - deltaX,
+              size.height + deltaY
+            ));
+            newX = position.x + (size.width - newWidth);
             break;
           case 'ne':
-            newWidth = Math.max(50, size.width + deltaX);
-            newHeight = Math.max(30, size.height - deltaY);
-            newY = position.y + deltaY;
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width + deltaX,
+              size.height - deltaY
+            ));
+            newY = position.y + (size.height - newHeight);
             break;
           case 'nw':
-            newWidth = Math.max(50, size.width - deltaX);
-            newHeight = Math.max(30, size.height - deltaY);
-            newX = position.x + deltaX;
-            newY = position.y + deltaY;
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width - deltaX,
+              size.height - deltaY
+            ));
+            newX = position.x + (size.width - newWidth);
+            newY = position.y + (size.height - newHeight);
             break;
           case 'n':
-            newHeight = Math.max(30, size.height - deltaY);
-            newY = position.y + deltaY;
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width,
+              size.height - deltaY
+            ));
+            newY = position.y + (size.height - newHeight);
             break;
           case 's':
-            newHeight = Math.max(30, size.height + deltaY);
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width,
+              size.height + deltaY
+            ));
             break;
           case 'e':
-            newWidth = Math.max(50, size.width + deltaX);
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width + deltaX,
+              size.height
+            ));
             break;
           case 'w':
-            newWidth = Math.max(50, size.width - deltaX);
-            newX = position.x + deltaX;
+            ({ width: newWidth, height: newHeight } = constrainSize(
+              size.width - deltaX,
+              size.height
+            ));
+            newX = position.x + (size.width - newWidth);
             break;
         }
         
@@ -120,37 +181,55 @@ export function ResizableElement({
       setIsDragging(false);
       setIsResizing(false);
       setResizeHandle(null);
+      document.body.style.cursor = '';
     };
 
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, isResizing, dragStart, position, size, resizeHandle, onMove, onResize]);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, isResizing, dragStart, position, size, resizeHandle, onMove, onResize, gridSize]);
 
   const resizeHandles: ResizeHandle[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
+  
+  const getHandleCursor = (handle: ResizeHandle): string => {
+    const cursors: Record<ResizeHandle, string> = {
+      nw: 'nw-resize',
+      n: 'n-resize',
+      ne: 'ne-resize',
+      e: 'e-resize',
+      se: 'se-resize',
+      s: 's-resize',
+      sw: 'sw-resize',
+      w: 'w-resize'
+    };
+    return cursors[handle];
+  };
   
   const getHandleClasses = (handle: ResizeHandle) => {
     const baseClasses = 'absolute bg-white border-2 border-blue-500 rounded-sm';
     const size = 'w-3 h-3';
     
     const positions = {
-      nw: '-top-1.5 -left-1.5 cursor-nw-resize',
-      n: '-top-1.5 left-1/2 -translate-x-1/2 cursor-n-resize',
-      ne: '-top-1.5 -right-1.5 cursor-ne-resize',
-      e: 'top-1/2 -translate-y-1/2 -right-1.5 cursor-e-resize',
-      se: '-bottom-1.5 -right-1.5 cursor-se-resize',
-      s: '-bottom-1.5 left-1/2 -translate-x-1/2 cursor-s-resize',
-      sw: '-bottom-1.5 -left-1.5 cursor-sw-resize',
-      w: 'top-1/2 -translate-y-1/2 -left-1.5 cursor-w-resize'
+      nw: '-top-1.5 -left-1.5',
+      n: '-top-1.5 left-1/2 -translate-x-1/2',
+      ne: '-top-1.5 -right-1.5',
+      e: 'top-1/2 -translate-y-1/2 -right-1.5',
+      se: '-bottom-1.5 -right-1.5',
+      s: '-bottom-1.5 left-1/2 -translate-x-1/2',
+      sw: '-bottom-1.5 -left-1.5',
+      w: 'top-1/2 -translate-y-1/2 -left-1.5'
     };
     
-    return `${baseClasses} ${size} ${positions[handle]}`;
+    return cn(
+      baseClasses,
+      size,
+      positions[handle],
+      `cursor-${getHandleCursor(handle)}`
+    );
   };
 
   return (
@@ -160,19 +239,27 @@ export function ResizableElement({
         'absolute select-none',
         isSelected && 'z-10',
         isDragging && 'cursor-grabbing',
-        !isDragging && !isResizing && 'cursor-grab'
+        !isDragging && !isResizing && isSelected && 'cursor-grab'
       )}
       style={{
-        left: position.x,
-        top: position.y,
+        transform: `translate(${position.x}px, ${position.y}px)`,
         width: size.width,
-        height: size.height
+        height: size.height,
+        transition: isDragging || isResizing ? 'none' : 'all 0.1s ease'
       }}
       onMouseDown={handleMouseDown}
     >
-      {/* Selection outline */}
+      {/* Selection outline with measurements */}
       {isSelected && (
-        <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none -z-10" />
+        <>
+          <div className="absolute inset-0 border-2 border-blue-500 pointer-events-none" />
+          <div className="absolute -top-6 left-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+            {Math.round(size.width)} × {Math.round(size.height)}
+          </div>
+          <div className="absolute -top-6 right-0 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+            {Math.round(position.x)}, {Math.round(position.y)}
+          </div>
+        </>
       )}
       
       {/* Element content */}

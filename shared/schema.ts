@@ -34,3 +34,37 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
+
+export interface Element {
+  id: string;
+  type: string;
+  name: string;
+  visible?: boolean;
+  children?: Element[];
+  props: Record<string, any>;
+  style: Record<string, any>;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  thumbnail?: string;
+  status: 'draft' | 'published';
+  content: {
+    elements: Element[];
+    history?: {
+      states: {
+        elements: Element[];
+        selectedElement?: string;
+      }[];
+      currentIndex: number;
+    };
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  userId: number;
+}
+
+export type InsertProject = Omit<Project, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateProject = Partial<Omit<Project, 'id' | 'createdAt'>>;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { Project } from '@shared/schema';
+import { Project, InsertProject } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,24 +23,53 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function Homepage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [templates, setTemplates] = useState<Array<{ 
+    id: number;
+    name: string; 
+    description: string;
+    thumbnail?: string;
+    content?: { elements: any[] };
+  }>>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ['/api/projects'],
   });
 
+  const fetchTemplates = async () => {
+    try {
+      console.log('Fetching templates...');
+      const response = await fetch('/api/templates');
+      console.log('Template response status:', response.status);
+      if (!response.ok) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch templates",
+          variant: "destructive",
+        });
+        throw new Error('Failed to fetch templates');
+      }
+      const data = await response.json();
+      console.log('Fetched templates:', data);
+      setTemplates(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      return [];
+    }
+  };
+
   const createProjectMutation = useMutation({
-    mutationFn: async (projectData: { name: string; description?: string }) => {
-      return apiRequest('POST', '/api/projects', {
-        ...projectData,
-        content: { elements: [] },
-        status: 'draft'
-      });
+    mutationFn: async (projectData: InsertProject): Promise<Project> => {
+      return apiRequest('POST', '/api/projects', projectData);
     },
     onSuccess: () => {
       toast({
@@ -57,6 +86,56 @@ export default function Homepage() {
       });
     },
   });
+
+  const handleTemplateSelect = async (template: { 
+    id: number;
+    name: string; 
+    description: string;
+    thumbnail?: string;
+    content?: { elements: any[] };
+  }) => {
+    setIsTemplateModalOpen(false);
+    const projectData: InsertProject = {
+      name: template.name,
+      description: template.description,
+      content: template.content || { elements: [] },
+      status: 'draft',
+      userId: 1
+    };
+    
+    const project = await createProjectMutation.mutateAsync(projectData);
+    if (project?.id) {
+      navigate(`/builder/${project.id}`);
+    }
+  };
+
+  const handleCreateProject = async (type: 'blank' | 'template' | 'import') => {
+    if (type === 'template') {
+      const fetchedTemplates = await fetchTemplates();
+      setTemplates(fetchedTemplates);
+      setIsTemplateModalOpen(true);
+      return;
+    }
+
+    if (type === 'import') {
+      navigate('/import');
+      return;
+    }
+
+    // For blank projects
+    const projectData: InsertProject = {
+      name: 'New Project',
+      description: 'A blank canvas for your creativity',
+      content: { elements: [] },
+      status: 'draft',
+      userId: 1
+    };
+    
+    const project = await createProjectMutation.mutateAsync(projectData);
+    if (project?.id) {
+      navigate(`/builder/${project.id}`);
+    }
+  };
 
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
@@ -78,32 +157,12 @@ export default function Homepage() {
     },
   });
 
-  const handleCreateProject = (type: 'blank' | 'template' | 'import') => {
-    let name = '';
-    let description = '';
-    
-    switch (type) {
-      case 'blank':
-        name = 'New Project';
-        description = 'A blank canvas for your creativity';
-        break;
-      case 'template':
-        name = 'Template Project';
-        description = 'Started from a professional template';
-        break;
-      case 'import':
-        name = 'Imported Project';
-        description = 'Imported from existing design files';
-        break;
-    }
-    
-    createProjectMutation.mutate({ name, description });
-  };
-
-  const filteredProjects = projects?.filter((project: Project) =>
+  const filteredProjects = (projects as Project[] || []).filter((project: Project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  );
+
+  const formatDate = (date: Date | null) => date ? formatTimeAgo(new Date(date)) : 'Unknown';
 
   if (isLoading) {
     return (
@@ -210,50 +269,83 @@ export default function Homepage() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0"
-            onClick={() => handleCreateProject('template')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Start from Template</h3>
-                  <p className="text-blue-100">Choose from our curated templates</p>
-                </div>
-                <Rocket size={32} />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-green-500 to-green-600 text-white border-0"
+            className="hover:border-blue-500 cursor-pointer transition-colors"
             onClick={() => handleCreateProject('blank')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Blank Canvas</h3>
-                  <p className="text-green-100">Start fresh with unlimited creativity</p>
-                </div>
-                <Palette size={32} />
+            <CardHeader>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <Plus size={24} className="text-blue-600" />
               </div>
-            </CardContent>
+              <CardTitle>Start from Scratch</CardTitle>
+              <CardDescription>Create a new project from a blank canvas</CardDescription>
+            </CardHeader>
           </Card>
-          
+
           <Card 
-            className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-r from-orange-500 to-orange-600 text-white border-0"
+            className="hover:border-purple-500 cursor-pointer transition-colors"
+            onClick={() => handleCreateProject('template')}
+          >
+            <CardHeader>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <Palette size={24} className="text-purple-600" />
+              </div>
+              <CardTitle>Start from Template</CardTitle>
+              <CardDescription>Choose from our pre-built templates</CardDescription>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="hover:border-green-500 cursor-pointer transition-colors"
             onClick={() => handleCreateProject('import')}
           >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Import Project</h3>
-                  <p className="text-orange-100">Upload existing design files</p>
-                </div>
-                <Upload size={32} />
+            <CardHeader>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <Upload size={24} className="text-green-600" />
               </div>
-            </CardContent>
+              <CardTitle>Import Design</CardTitle>
+              <CardDescription>Import from Figma or other design files</CardDescription>
+            </CardHeader>
           </Card>
         </div>
+
+        {/* Template Selection Modal */}
+        <Dialog open={isTemplateModalOpen} onOpenChange={setIsTemplateModalOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Choose a Template</DialogTitle>
+              <DialogDescription>
+                Select a template to start your project with a pre-built design
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              {templates.map((template) => (
+                <Card 
+                  key={template.id}
+                  className="cursor-pointer hover:border-blue-500 transition-colors"
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <div className="aspect-video bg-gray-100 rounded-t-lg overflow-hidden">
+                    {template.thumbnail ? (
+                      <img 
+                        src={template.thumbnail} 
+                        alt={template.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Palette size={32} className="text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    <CardDescription>{template.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Projects Grid */}
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'space-y-4'}>
@@ -261,7 +353,10 @@ export default function Homepage() {
             <Card key={project.id} className="hover:shadow-lg transition-shadow group">
               {viewMode === 'grid' ? (
                 <>
-                  <div className="aspect-video bg-gray-100 relative overflow-hidden">
+                  <div 
+                    className="aspect-video bg-gray-100 relative overflow-hidden cursor-pointer"
+                    onClick={() => navigate(`/builder/${project.id}`)}
+                  >
                     {project.thumbnail ? (
                       <img
                         src={project.thumbnail}
@@ -303,7 +398,7 @@ export default function Homepage() {
                     
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500">
-                        {formatTimeAgo(new Date(project.updatedAt))}
+                        {formatDate(project.updatedAt)}
                       </span>
                       <Badge variant={project.status === 'published' ? 'default' : 'secondary'}>
                         {project.status}
@@ -328,7 +423,12 @@ export default function Homepage() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base truncate">{project.name}</CardTitle>
+                        <CardTitle 
+                          className="text-base truncate cursor-pointer"
+                          onClick={() => navigate(`/builder/${project.id}`)}
+                        >
+                          {project.name}
+                        </CardTitle>
                         <div className="flex items-center space-x-2">
                           <Badge variant={project.status === 'published' ? 'default' : 'secondary'}>
                             {project.status}
@@ -347,7 +447,7 @@ export default function Homepage() {
                       
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-gray-500">
-                          {formatTimeAgo(new Date(project.updatedAt))}
+                          {formatDate(project.updatedAt)}
                         </span>
                         <div className="flex items-center space-x-2">
                           <Link href={`/builder/${project.id}`}>
@@ -368,12 +468,6 @@ export default function Homepage() {
                     </div>
                   </div>
                 </CardContent>
-              )}
-              
-              {viewMode === 'grid' && (
-                <div className="absolute inset-0 cursor-pointer">
-                  <Link href={`/builder/${project.id}`} className="block w-full h-full" />
-                </div>
               )}
             </Card>
           ))}
