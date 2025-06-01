@@ -30,8 +30,12 @@ export function DropZone({
 
   const handleDragLeave = (e: DragEvent) => {
     if (!allowDrop) return;
-    // Only hide drop indicator if we're actually leaving the drop zone
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Check if we're still within the bounds of the drop zone
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
   };
@@ -39,15 +43,21 @@ export function DropZone({
   const handleDrop = (e: DragEvent) => {
     if (!allowDrop) return;
     e.preventDefault();
+    e.stopPropagation();
     setIsDragOver(false);
 
     const elementType = e.dataTransfer.getData('text/plain');
     if (!elementType || !elementTemplates[elementType]) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
+    
+    // Calculate position relative to the canvas, accounting for zoom
+    const canvasElement = e.currentTarget.closest('[style*="scale"]') as HTMLElement;
+    const zoom = canvasElement ? parseFloat(getComputedStyle(canvasElement).transform.match(/scale\(([^)]+)\)/)?.[1] || '1') : 1;
+    
     const position = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom
     };
 
     if (onDrop) {
@@ -69,13 +79,14 @@ export function DropZone({
       onDrop={handleDrop}
       className={cn(
         className,
-        isDragOver && allowDrop && 'bg-blue-50 border-2 border-dashed border-blue-300'
+        'relative',
+        isDragOver && allowDrop && 'bg-blue-900 bg-opacity-20'
       )}
     >
       {children}
       {isDragOver && allowDrop && (
-        <div className="absolute inset-0 bg-blue-50 bg-opacity-50 border-2 border-dashed border-blue-400 flex items-center justify-center pointer-events-none z-10">
-          <div className="bg-blue-500 text-white px-3 py-2 rounded-lg font-medium">
+        <div className="absolute inset-0 bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400 flex items-center justify-center pointer-events-none z-50">
+          <div className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium shadow-lg">
             Drop {draggedElementType} here
           </div>
         </div>

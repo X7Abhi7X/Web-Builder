@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlignLeft, AlignCenter, AlignRight, RotateCcw, Move3D } from 'lucide-react';
 
 interface ElementPropertiesProps {
   elementId: string;
@@ -54,167 +54,101 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
   };
 
   const style = element.props.style || {};
+  const position = element.position || { x: 0, y: 0 };
 
   return (
-    <div className="space-y-6">
-      {/* Element Info */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Element</h4>
-        <div className="bg-gray-50 rounded-lg p-3">
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full" />
-            <span className="font-medium text-gray-900 capitalize">{element.type}</span>
+    <div className="space-y-4 text-sm">
+      {/* Element Header */}
+      <div className="bg-gray-50 rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900 capitalize">{element.type}</h3>
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <Move3D size={12} />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+              <RotateCcw size={12} />
+            </Button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">ID: {element.id}</p>
         </div>
       </div>
 
-      {/* Content Properties */}
-      {(element.type === 'text' || element.type === 'heading' || element.type === 'button') && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Content</h4>
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="text">Text</Label>
-              <Textarea
-                id="text"
-                value={element.props.text || ''}
-                onChange={(e) => updateElementProp('props.text', e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Image Properties */}
-      {element.type === 'image' && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Image</h4>
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="src">Source URL</Label>
-              <Input
-                id="src"
-                value={element.props.src || ''}
-                onChange={(e) => updateElementProp('props.src', e.target.value)}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-            <div>
-              <Label htmlFor="alt">Alt Text</Label>
-              <Input
-                id="alt"
-                value={element.props.alt || ''}
-                onChange={(e) => updateElementProp('props.alt', e.target.value)}
-                placeholder="Describe the image"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Video Properties */}
-      {element.type === 'video' && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Video</h4>
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="videoSrc">Source URL</Label>
-              <Input
-                id="videoSrc"
-                value={element.props.src || ''}
-                onChange={(e) => updateElementProp('props.src', e.target.value)}
-                placeholder="https://example.com/video.mp4"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Separator />
-
-      {/* Layout Properties */}
+      {/* Position */}
       <div>
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Layout</h4>
-        <div className="space-y-3">
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Position</Label>
+        <div className="mt-2 space-y-2">
+          {/* Alignment buttons */}
+          <div className="flex items-center space-x-1">
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+              <AlignLeft size={12} />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+              <AlignCenter size={12} />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+              <AlignRight size={12} />
+            </Button>
+          </div>
+          
+          {/* X and Y coordinates */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label htmlFor="width">Width</Label>
+              <Label className="text-xs text-gray-600">X</Label>
               <Input
-                id="width"
-                value={style.width || ''}
-                onChange={(e) => updateElementProp('style.width', e.target.value)}
-                placeholder="auto"
+                value={Math.round(position.x)}
+                onChange={(e) => updateElement(elementId, { position: { ...position, x: parseInt(e.target.value) || 0 } })}
+                className="h-7 text-xs"
               />
             </div>
             <div>
-              <Label htmlFor="height">Height</Label>
+              <Label className="text-xs text-gray-600">Y</Label>
               <Input
-                id="height"
-                value={style.height || ''}
-                onChange={(e) => updateElementProp('style.height', e.target.value)}
-                placeholder="auto"
+                value={Math.round(position.y)}
+                onChange={(e) => updateElement(elementId, { position: { ...position, y: parseInt(e.target.value) || 0 } })}
+                className="h-7 text-xs"
               />
             </div>
           </div>
           
+          {/* Rotation */}
           <div>
-            <Label>Padding</Label>
-            <div className="grid grid-cols-4 gap-1 mt-1">
+            <Label className="text-xs text-gray-600">Rotation</Label>
+            <div className="flex items-center space-x-2">
               <Input
-                placeholder="T"
-                value={style.paddingTop || ''}
-                onChange={(e) => updateElementProp('style.paddingTop', e.target.value)}
-                className="text-center text-xs"
+                value="0°"
+                className="h-7 text-xs"
+                readOnly
               />
-              <Input
-                placeholder="R"
-                value={style.paddingRight || ''}
-                onChange={(e) => updateElementProp('style.paddingRight', e.target.value)}
-                className="text-center text-xs"
-              />
-              <Input
-                placeholder="B"
-                value={style.paddingBottom || ''}
-                onChange={(e) => updateElementProp('style.paddingBottom', e.target.value)}
-                className="text-center text-xs"
-              />
-              <Input
-                placeholder="L"
-                value={style.paddingLeft || ''}
-                onChange={(e) => updateElementProp('style.paddingLeft', e.target.value)}
-                className="text-center text-xs"
-              />
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                <RotateCcw size={12} />
+              </Button>
             </div>
           </div>
-          
-          <div>
-            <Label>Margin</Label>
-            <div className="grid grid-cols-4 gap-1 mt-1">
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Layout - Dimensions */}
+      <div>
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Layout</Label>
+        <div className="mt-2">
+          <Label className="text-xs text-gray-600">Dimensions</Label>
+          <div className="grid grid-cols-2 gap-2 mt-1">
+            <div>
+              <Label className="text-xs text-gray-500">W</Label>
               <Input
-                placeholder="T"
-                value={style.marginTop || ''}
-                onChange={(e) => updateElementProp('style.marginTop', e.target.value)}
-                className="text-center text-xs"
+                value={style.width ? parseInt(style.width) : '200'}
+                onChange={(e) => updateElementProp('style.width', `${e.target.value}px`)}
+                className="h-7 text-xs"
               />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">H</Label>
               <Input
-                placeholder="R"
-                value={style.marginRight || ''}
-                onChange={(e) => updateElementProp('style.marginRight', e.target.value)}
-                className="text-center text-xs"
-              />
-              <Input
-                placeholder="B"
-                value={style.marginBottom || ''}
-                onChange={(e) => updateElementProp('style.marginBottom', e.target.value)}
-                className="text-center text-xs"
-              />
-              <Input
-                placeholder="L"
-                value={style.marginLeft || ''}
-                onChange={(e) => updateElementProp('style.marginLeft', e.target.value)}
-                className="text-center text-xs"
+                value={style.height ? parseInt(style.height) : '100'}
+                onChange={(e) => updateElementProp('style.height', `${e.target.value}px`)}
+                className="h-7 text-xs"
               />
             </div>
           </div>
@@ -223,85 +157,93 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
 
       <Separator />
 
-      {/* Style Properties */}
+      {/* Appearance */}
       <div>
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Style</h4>
-        <div className="space-y-3">
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Appearance</Label>
+        <div className="mt-2 space-y-3">
+          {/* Opacity */}
           <div>
-            <Label htmlFor="backgroundColor">Background Color</Label>
+            <Label className="text-xs text-gray-600">Opacity</Label>
             <div className="flex items-center space-x-2">
-              <input
-                type="color"
-                value={style.backgroundColor || '#ffffff'}
-                onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
-                className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
-              />
               <Input
-                id="backgroundColor"
-                value={style.backgroundColor || ''}
-                onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
-                placeholder="#ffffff"
-                className="flex-1"
+                value="100%"
+                className="h-7 text-xs flex-1"
+                readOnly
               />
             </div>
           </div>
           
+          {/* Corner radius */}
           <div>
-            <Label htmlFor="borderRadius">Border Radius</Label>
+            <Label className="text-xs text-gray-600">Corner radius</Label>
             <Input
-              id="borderRadius"
-              value={style.borderRadius || ''}
-              onChange={(e) => updateElementProp('style.borderRadius', e.target.value)}
-              placeholder="0px"
+              value={style.borderRadius ? parseInt(style.borderRadius) : '0'}
+              onChange={(e) => updateElementProp('style.borderRadius', `${e.target.value}px`)}
+              className="h-7 text-xs"
             />
           </div>
         </div>
       </div>
 
-      {/* Typography Properties */}
+      <Separator />
+
+      {/* Fill */}
+      <div>
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Fill</Label>
+        <div className="mt-2">
+          <div className="flex items-center space-x-2">
+            <input
+              type="color"
+              value={style.backgroundColor || '#D9D9D9'}
+              onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
+              className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
+            />
+            <Input
+              value={style.backgroundColor || '#D9D9D9'}
+              onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
+              className="h-7 text-xs flex-1"
+            />
+            <span className="text-xs text-gray-500">100%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Properties for text elements */}
       {(element.type === 'text' || element.type === 'heading' || element.type === 'button') && (
         <>
           <Separator />
           <div>
-            <h4 className="text-sm font-medium text-gray-900 mb-3">Typography</h4>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="fontFamily">Font Family</Label>
-                <Select
-                  value={style.fontFamily || 'Inter'}
-                  onValueChange={(value) => updateElementProp('style.fontFamily', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select font" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Inter">Inter</SelectItem>
-                    <SelectItem value="Roboto">Roboto</SelectItem>
-                    <SelectItem value="Open Sans">Open Sans</SelectItem>
-                    <SelectItem value="Poppins">Poppins</SelectItem>
-                    <SelectItem value="Lato">Lato</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
+            <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Content</Label>
+            <div className="mt-2">
+              <Textarea
+                value={element.props.text || ''}
+                onChange={(e) => updateElementProp('props.text', e.target.value)}
+                className="h-16 text-xs resize-none"
+                placeholder="Enter text..."
+              />
+            </div>
+          </div>
+          
+          <div>
+            <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Typography</Label>
+            <div className="mt-2 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="fontSize">Font Size</Label>
+                  <Label className="text-xs text-gray-600">Font Size</Label>
                   <Input
-                    id="fontSize"
-                    value={style.fontSize || ''}
-                    onChange={(e) => updateElementProp('style.fontSize', e.target.value)}
-                    placeholder="16px"
+                    value={style.fontSize ? parseInt(style.fontSize) : '16'}
+                    onChange={(e) => updateElementProp('style.fontSize', `${e.target.value}px`)}
+                    className="h-7 text-xs"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="fontWeight">Font Weight</Label>
+                  <Label className="text-xs text-gray-600">Weight</Label>
                   <Select
                     value={style.fontWeight || '400'}
                     onValueChange={(value) => updateElementProp('style.fontWeight', value)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Weight" />
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="300">Light</SelectItem>
@@ -314,21 +256,20 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
                 </div>
               </div>
               
+              {/* Text Color */}
               <div>
-                <Label htmlFor="textColor">Text Color</Label>
+                <Label className="text-xs text-gray-600">Color</Label>
                 <div className="flex items-center space-x-2">
                   <input
                     type="color"
                     value={style.color || '#000000'}
                     onChange={(e) => updateElementProp('style.color', e.target.value)}
-                    className="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                    className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
                   />
                   <Input
-                    id="textColor"
-                    value={style.color || ''}
+                    value={style.color || '#000000'}
                     onChange={(e) => updateElementProp('style.color', e.target.value)}
-                    placeholder="#000000"
-                    className="flex-1"
+                    className="h-7 text-xs flex-1"
                   />
                 </div>
               </div>
@@ -337,20 +278,48 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
         </>
       )}
 
+      {/* Image Properties */}
+      {element.type === 'image' && (
+        <>
+          <Separator />
+          <div>
+            <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Image</Label>
+            <div className="mt-2 space-y-2">
+              <div>
+                <Label className="text-xs text-gray-600">Source URL</Label>
+                <Input
+                  value={element.props.src || ''}
+                  onChange={(e) => updateElementProp('props.src', e.target.value)}
+                  className="h-7 text-xs"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-600">Alt Text</Label>
+                <Input
+                  value={element.props.alt || ''}
+                  onChange={(e) => updateElementProp('props.alt', e.target.value)}
+                  className="h-7 text-xs"
+                  placeholder="Describe the image"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <Separator />
 
-      {/* Actions */}
-      <div>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => deleteElement(elementId)}
-          className="w-full"
-        >
-          <Trash2 size={16} className="mr-2" />
-          Delete Element
-        </Button>
-      </div>
+      {/* Delete Action */}
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => deleteElement(elementId)}
+        className="w-full h-8 text-xs"
+      >
+        <Trash2 size={12} className="mr-2" />
+        Delete Element
+      </Button>
     </div>
   );
 }
