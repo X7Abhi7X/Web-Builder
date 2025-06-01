@@ -32,11 +32,6 @@ yarn-error.log*
 *.swp
 *.swo
 
-# Replit specific
-.replit
-replit.nix
-.config/
-
 # Cache
 .cache/
 .temp/ 
