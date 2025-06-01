@@ -176,11 +176,56 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
           {/* Corner radius */}
           <div>
             <Label className="text-xs text-gray-600">Corner radius</Label>
-            <Input
-              value={style.borderRadius ? parseInt(style.borderRadius) : '0'}
-              onChange={(e) => updateElementProp('style.borderRadius', `${e.target.value}px`)}
-              className="h-7 text-xs"
-            />
+            <div className="grid grid-cols-4 gap-1 mt-1">
+              <div>
+                <Label className="text-xs text-gray-500">TL</Label>
+                <Input
+                  value={style.borderTopLeftRadius ? parseInt(style.borderTopLeftRadius) : '0'}
+                  onChange={(e) => updateElementProp('style.borderTopLeftRadius', `${e.target.value}px`)}
+                  className="h-7 text-xs text-center"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">TR</Label>
+                <Input
+                  value={style.borderTopRightRadius ? parseInt(style.borderTopRightRadius) : '0'}
+                  onChange={(e) => updateElementProp('style.borderTopRightRadius', `${e.target.value}px`)}
+                  className="h-7 text-xs text-center"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">BR</Label>
+                <Input
+                  value={style.borderBottomRightRadius ? parseInt(style.borderBottomRightRadius) : '0'}
+                  onChange={(e) => updateElementProp('style.borderBottomRightRadius', `${e.target.value}px`)}
+                  className="h-7 text-xs text-center"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">BL</Label>
+                <Input
+                  value={style.borderBottomLeftRadius ? parseInt(style.borderBottomLeftRadius) : '0'}
+                  onChange={(e) => updateElementProp('style.borderBottomLeftRadius', `${e.target.value}px`)}
+                  className="h-7 text-xs text-center"
+                />
+              </div>
+            </div>
+            <div className="mt-2">
+              <Label className="text-xs text-gray-500">All</Label>
+              <Input
+                value={style.borderRadius ? parseInt(style.borderRadius) : '0'}
+                onChange={(e) => {
+                  const value = `${e.target.value}px`;
+                  updateElementProp('style.borderRadius', value);
+                  updateElementProp('style.borderTopLeftRadius', value);
+                  updateElementProp('style.borderTopRightRadius', value);
+                  updateElementProp('style.borderBottomRightRadius', value);
+                  updateElementProp('style.borderBottomLeftRadius', value);
+                }}
+                className="h-7 text-xs"
+                placeholder="0"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -194,16 +239,156 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
           <div className="flex items-center space-x-2">
             <input
               type="color"
-              value={style.backgroundColor || '#D9D9D9'}
+              value={style.backgroundColor || '#ffffff'}
               onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
               className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
             />
             <Input
-              value={style.backgroundColor || '#D9D9D9'}
+              value={style.backgroundColor || '#ffffff'}
               onChange={(e) => updateElementProp('style.backgroundColor', e.target.value)}
               className="h-7 text-xs flex-1"
             />
             <span className="text-xs text-gray-500">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Border */}
+      <div>
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Border</Label>
+        <div className="mt-2 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-gray-600">Width</Label>
+              <Input
+                value={style.borderWidth || '0'}
+                onChange={(e) => updateElementProp('style.borderWidth', `${e.target.value}px`)}
+                className="h-7 text-xs"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Style</Label>
+              <Select
+                value={style.borderStyle || 'solid'}
+                onValueChange={(value) => updateElementProp('style.borderStyle', value)}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                  <SelectItem value="dotted">Dotted</SelectItem>
+                  <SelectItem value="double">Double</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs text-gray-600">Color</Label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="color"
+                value={style.borderColor || '#000000'}
+                onChange={(e) => updateElementProp('style.borderColor', e.target.value)}
+                className="w-6 h-6 border border-gray-300 rounded cursor-pointer"
+              />
+              <Input
+                value={style.borderColor || '#000000'}
+                onChange={(e) => updateElementProp('style.borderColor', e.target.value)}
+                className="h-7 text-xs flex-1"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Padding */}
+      <div>
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Padding</Label>
+        <div className="mt-2">
+          <div className="grid grid-cols-4 gap-1">
+            <div>
+              <Label className="text-xs text-gray-500">T</Label>
+              <Input
+                value={style.paddingTop ? parseInt(style.paddingTop) : '8'}
+                onChange={(e) => updateElementProp('style.paddingTop', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">R</Label>
+              <Input
+                value={style.paddingRight ? parseInt(style.paddingRight) : '8'}
+                onChange={(e) => updateElementProp('style.paddingRight', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">B</Label>
+              <Input
+                value={style.paddingBottom ? parseInt(style.paddingBottom) : '8'}
+                onChange={(e) => updateElementProp('style.paddingBottom', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">L</Label>
+              <Input
+                value={style.paddingLeft ? parseInt(style.paddingLeft) : '8'}
+                onChange={(e) => updateElementProp('style.paddingLeft', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Margin */}
+      <div>
+        <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Margin</Label>
+        <div className="mt-2">
+          <div className="grid grid-cols-4 gap-1">
+            <div>
+              <Label className="text-xs text-gray-500">T</Label>
+              <Input
+                value={style.marginTop ? parseInt(style.marginTop) : '0'}
+                onChange={(e) => updateElementProp('style.marginTop', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">R</Label>
+              <Input
+                value={style.marginRight ? parseInt(style.marginRight) : '0'}
+                onChange={(e) => updateElementProp('style.marginRight', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">B</Label>
+              <Input
+                value={style.marginBottom ? parseInt(style.marginBottom) : '0'}
+                onChange={(e) => updateElementProp('style.marginBottom', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">L</Label>
+              <Input
+                value={style.marginLeft ? parseInt(style.marginLeft) : '0'}
+                onChange={(e) => updateElementProp('style.marginLeft', `${e.target.value}px`)}
+                className="h-7 text-xs text-center"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -227,6 +412,33 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
           <div>
             <Label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Typography</Label>
             <div className="mt-2 space-y-2">
+              {/* Font Family */}
+              <div>
+                <Label className="text-xs text-gray-600">Font Family</Label>
+                <Select
+                  value={style.fontFamily || 'Inter'}
+                  onValueChange={(value) => updateElementProp('style.fontFamily', value)}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Inter">Inter</SelectItem>
+                    <SelectItem value="Arial">Arial</SelectItem>
+                    <SelectItem value="Helvetica">Helvetica</SelectItem>
+                    <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                    <SelectItem value="Georgia">Georgia</SelectItem>
+                    <SelectItem value="Verdana">Verdana</SelectItem>
+                    <SelectItem value="Courier New">Courier New</SelectItem>
+                    <SelectItem value="Roboto">Roboto</SelectItem>
+                    <SelectItem value="Open Sans">Open Sans</SelectItem>
+                    <SelectItem value="Lato">Lato</SelectItem>
+                    <SelectItem value="Montserrat">Montserrat</SelectItem>
+                    <SelectItem value="Poppins">Poppins</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs text-gray-600">Font Size</Label>
@@ -246,14 +458,37 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="100">Thin</SelectItem>
+                      <SelectItem value="200">Extra Light</SelectItem>
                       <SelectItem value="300">Light</SelectItem>
                       <SelectItem value="400">Regular</SelectItem>
                       <SelectItem value="500">Medium</SelectItem>
                       <SelectItem value="600">Semibold</SelectItem>
                       <SelectItem value="700">Bold</SelectItem>
+                      <SelectItem value="800">Extra Bold</SelectItem>
+                      <SelectItem value="900">Black</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              {/* Text Alignment */}
+              <div>
+                <Label className="text-xs text-gray-600">Text Align</Label>
+                <Select
+                  value={style.textAlign || 'left'}
+                  onValueChange={(value) => updateElementProp('style.textAlign', value)}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                    <SelectItem value="justify">Justify</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               {/* Text Color */}
@@ -272,6 +507,17 @@ export function ElementProperties({ elementId }: ElementPropertiesProps) {
                     className="h-7 text-xs flex-1"
                   />
                 </div>
+              </div>
+              
+              {/* Line Height */}
+              <div>
+                <Label className="text-xs text-gray-600">Line Height</Label>
+                <Input
+                  value={style.lineHeight || '1.5'}
+                  onChange={(e) => updateElementProp('style.lineHeight', e.target.value)}
+                  className="h-7 text-xs"
+                  placeholder="1.5"
+                />
               </div>
             </div>
           </div>

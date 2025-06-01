@@ -50,18 +50,49 @@ function LayerItem({ element, level, isSelected, onSelect }: LayerItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
   const [isLocked, setIsLocked] = useState(false);
+  const { selectedElementId, deleteElement, updateElement } = useBuilderStore();
   
   const Icon = getElementIcon(element.type);
   const hasChildren = element.props.children && element.props.children.length > 0;
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteElement(element.id);
+  };
+
+  const handleVisibilityToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsVisible(!isVisible);
+    // In a real implementation, you would update element visibility
+    updateElement(element.id, {
+      props: {
+        ...element.props,
+        style: {
+          ...element.props.style,
+          display: isVisible ? 'none' : (element.props.style?.display || 'block')
+        }
+      }
+    });
+  };
+
+  const getElementDisplayName = () => {
+    if (element.props.text) {
+      return element.props.text.length > 20 
+        ? element.props.text.substring(0, 20) + '...'
+        : element.props.text;
+    }
+    return element.type.charAt(0).toUpperCase() + element.type.slice(1);
+  };
 
   return (
     <div>
       <div
         className={cn(
-          'flex items-center space-x-2 px-2 py-1 rounded cursor-pointer group hover:bg-gray-50',
+          'flex items-center space-x-2 px-2 py-1.5 rounded cursor-pointer group hover:bg-gray-50 transition-colors',
           isSelected && 'bg-blue-50 border-l-2 border-blue-500',
-          `ml-${level * 4}`
+          !isVisible && 'opacity-50'
         )}
+        style={{ marginLeft: `${level * 16}px` }}
         onClick={() => onSelect(element.id)}
       >
         {hasChildren ? (
@@ -70,7 +101,7 @@ function LayerItem({ element, level, isSelected, onSelect }: LayerItemProps) {
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="p-0.5 hover:bg-gray-200 rounded"
+            className="p-0.5 hover:bg-gray-200 rounded transition-colors"
           >
             {isExpanded ? (
               <ChevronDown size={12} className="text-gray-400" />
@@ -82,24 +113,34 @@ function LayerItem({ element, level, isSelected, onSelect }: LayerItemProps) {
           <div className="w-4" />
         )}
         
-        <Icon size={14} className="text-gray-500" />
+        <div className="w-5 h-5 flex items-center justify-center">
+          <Icon size={14} className={cn(
+            "text-gray-500",
+            element.type === 'text' && "text-blue-600",
+            element.type === 'heading' && "text-purple-600",
+            element.type === 'image' && "text-green-600",
+            element.type === 'button' && "text-orange-600",
+            element.type === 'section' && "text-gray-600"
+          )} />
+        </div>
         
-        <span className="flex-1 text-sm text-gray-700 truncate">
-          {element.props.text || element.type.charAt(0).toUpperCase() + element.type.slice(1)}
+        <span className={cn(
+          "flex-1 text-sm truncate transition-colors",
+          isSelected ? "text-blue-700 font-medium" : "text-gray-700"
+        )}>
+          {getElementDisplayName()}
         </span>
         
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsVisible(!isVisible);
-            }}
-            className="p-1 hover:bg-gray-200 rounded"
+            onClick={handleVisibilityToggle}
+            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            title={isVisible ? "Hide element" : "Show element"}
           >
             {isVisible ? (
               <Eye size={12} className="text-gray-500" />
             ) : (
-              <EyeOff size={12} className="text-gray-500" />
+              <EyeOff size={12} className="text-red-500" />
             )}
           </button>
           <button
@@ -107,25 +148,35 @@ function LayerItem({ element, level, isSelected, onSelect }: LayerItemProps) {
               e.stopPropagation();
               setIsLocked(!isLocked);
             }}
-            className="p-1 hover:bg-gray-200 rounded"
+            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            title={isLocked ? "Unlock element" : "Lock element"}
           >
             {isLocked ? (
-              <Lock size={12} className="text-gray-500" />
+              <Lock size={12} className="text-red-500" />
             ) : (
               <Unlock size={12} className="text-gray-500" />
             )}
           </button>
+          {level > 0 && (
+            <button
+              onClick={handleDelete}
+              className="p-1 hover:bg-red-100 rounded transition-colors"
+              title="Delete element"
+            >
+              <Layout size={12} className="text-red-500" />
+            </button>
+          )}
         </div>
       </div>
       
       {hasChildren && isExpanded && (
-        <div>
+        <div className="border-l border-gray-200 ml-2">
           {element.props.children!.map((child) => (
             <LayerItem
               key={child.id}
               element={child}
               level={level + 1}
-              isSelected={false}
+              isSelected={selectedElementId === child.id}
               onSelect={onSelect}
             />
           ))}
