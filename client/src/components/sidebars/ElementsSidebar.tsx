@@ -26,12 +26,14 @@ const elementTypes = [
     category: 'Layout',
     elements: [
       { type: 'section', icon: Square, label: 'Section', description: 'Container element' },
-      { type: 'container', icon: Layout, label: 'Container', description: 'Centered container' },
-      { type: 'columns', icon: Columns, label: 'Columns', description: 'Column layout' }
+      { type: 'container', icon: Layout, label: 'Container', description: 'Wrapper container' },
+      { type: 'column-2', icon: Columns, label: '2 Columns', description: 'Two column layout' },
+      { type: 'column-3', icon: Columns, label: '3 Columns', description: 'Three column layout' },
+      { type: 'column-4', icon: Columns, label: '4 Columns', description: 'Four column layout' }
     ]
   },
   {
-    category: 'Navigation',
+    category: 'Navigation Tools',
     elements: [
       { type: 'navbar', icon: Navigation, label: 'Navbar', description: 'Navigation bar' },
       { type: 'footer', icon: Minus, label: 'Footer', description: 'Page footer' }

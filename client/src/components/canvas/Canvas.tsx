@@ -20,14 +20,14 @@ export function Canvas() {
     }
   };
 
-  const getCanvasWidth = () => {
+  const getCanvasSize = () => {
     switch (viewport) {
       case 'mobile':
-        return '375px';
+        return { width: '375px', height: '667px' };
       case 'tablet':
-        return '768px';
+        return { width: '768px', height: '1024px' };
       default:
-        return '2400px'; // Much larger canvas
+        return { width: '1200px', height: '1200px' }; // Square canvas
     }
   };
 
@@ -133,8 +133,7 @@ export function Canvas() {
           <div
             className="bg-black rounded-lg shadow-2xl relative transition-all duration-300 border border-gray-600"
             style={{
-              width: getCanvasWidth(),
-              minHeight: '2000px', // Much larger height
+              ...getCanvasSize(),
               transform: `scale(${zoom / 100})`,
               transformOrigin: 'top center'
             }}
